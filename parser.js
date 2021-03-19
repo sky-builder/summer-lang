@@ -2,8 +2,9 @@
  * Algorithm: Recursive Descent
  * 
  * Grammer Rule:
- * statement -> vars | if | exp | fd
- * fd -> 'fun' identifier'()' '{' block '}'
+ * statement -> vars | if | exp | fd | returns
+ * returns -> 'return' | 'return' expression
+ * fd -> 'fun' identifier('()' | '(identifer(','identifier)*)') '{' block '}'
  * ifs -> 'if' '(' exp ')' block
  * block -> '{' statements* '}'
  * vars -> 'var' identifier (= exp)
@@ -31,12 +32,14 @@ let current = 0;
 function getPrevious() {
     return tokens[current - 1];
 }
+
 function Expression(op, left, right) {
     this.type = 'binary-expression';
     this.op = op;
     this.left = left;
     this.right = right;
 }
+
 function getExpression() {
     return pgetExpression();
 }
@@ -51,6 +54,7 @@ function pgetExpression() {
     }
     return exp;
 }
+
 function prefix() {
     if(tokens[current] === '+' || tokens[current] === '-') {
         current += 1;
@@ -86,18 +90,34 @@ function isDigit(x) {
     return x >= '0' && x <= '9';
 }
 
-function FC(id) { 
+function FC(id, args) { 
+    this.type = 'fc';
     this.id = id;
+    this.args = args;
 }
 
 function primary() {
     if (!isDigit(tokens[current])) {
         let e = tokens[current];
         current += 1;
-        if (tokens[current] === '(' && tokens[current + 1] === ')') {
-            current += 1;
-            current += 1;
-            return new FC(e);
+        if (tokens[current] === '(') {
+            if (tokens[current + 1] === ')') {
+                current += 1;
+                current += 1;
+                return new FC(e);
+            } else {
+                current += 1;
+                let ep = getExpression();
+                console.log({ep})
+                let eps = [];
+                eps.push(ep);
+                while(tokens[current] === ',') {
+                    ep = getExpression();
+                    eps.push(ep);
+                }
+                consume(')')
+                return new FC(e, eps);
+            }
         }
          return new Identifier(e);
     } else if (tokens[current] === '(') {
@@ -124,6 +144,7 @@ function getVariableDeclartion() {
     current += 1;
     let id = tokens[current];
     current += 1;
+    console.log({current, token: tokens[current]}, 'a')
     if (tokens[current] === '=') {
         current += 1;
         let e = getExpression();
@@ -131,6 +152,7 @@ function getVariableDeclartion() {
     }
     return new VAR_STATMENT(id, e);
 }
+
 function consume(t) {
     if (tokens[current] !== t) {
         console.error('unexpect token', tokens[current], 'expected: ', t);
@@ -148,9 +170,10 @@ function block() {
     consume('{')
     let sts = [];
     while(tokens[current] && tokens[current] !== '}') {
-        st = sta();
+        st = getStatement();
         sts.push(st);
-        current += 1;
+        console.log({current, token: tokens[current]})
+        // current += 1;
     }
     consume("}")
     return sts;
@@ -165,23 +188,59 @@ function getIfStatement() {
     return new IF_EXPRESSION(e, b);
 }
 
-function FUN(id, block) {
+function FUN(id, block, paramters) {
+    this.type = 'fun';
     this.id = id;
     this.block = block;
+    this.paramters = paramters;
 }
 
 function getFunctionDeclartion() {
     current += 1;
     let id = tokens[current];
     current += 1;
-    consume('(')
-    consume(')')
-    let b = block();
-    return new FUN(id, b);
+    if (tokens[current] === '(' && tokens[current + 1] === ')') {
+        current += 2;
+        let b = block();
+        return new FUN(id, b);
+    } else if (tokens[current] === '(') {
+        current += 1;
+        let ids = [];
+        let idd = tokens[current];
+        ids.push(idd);
+        current += 1;
+        while(tokens[current] === ',') {
+            current += 1;
+            idd = tokens[current];
+            current += 1;
+        }
+        consume(')');
+        let b = block();
+        return new FUN(id, b, ids);
+    }
+   
+}
+function RT(exp) {
+    this.type = 'return';
+    this.exp = exp;
+}
+
+function rs() {
+    current += 1;
+    if (tokens[current] === ';') {
+        return new RT(); 
+    }
+    let exp = getExpression();
+    return new RT(exp);
 }
 
 function getStatement() {
     switch (tokens[current]) {
+        case 'return': {
+            let statement = rs();
+            consume(';')
+            return statement;
+        }
         case 'var': {
             let statment = getVariableDeclartion();
             consume(';')
@@ -191,6 +250,7 @@ function getStatement() {
             return getIfStatement();
         }
         case 'fun': {
+            console.log('hit')
             return getFunctionDeclartion();
         }
         default: {

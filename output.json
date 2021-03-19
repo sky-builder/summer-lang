@@ -1,15 +1,1 @@
-{
-    "op": "*",
-    "left": {
-        "op": "-",
-        "left": "1",
-        "right": {
-            "op": "-",
-            "right": "1"
-        }
-    },
-    "right": {
-        "op": "-",
-        "right": "1"
-    }
-}
+[{"type":"fun","id":"f","block":[{"type":"return","exp":{"type":"binary-expression","op":"+","left":"1","right":{"name":"a"}}}],"paramters":["a"]},{"type":"fc","id":"f","args":["41"]}]
