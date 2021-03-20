@@ -15,7 +15,7 @@ function m() {
     console.log({tokens})
     let output = parse(tokens);
     fs.writeFileSync('output.json', JSON.stringify(output))
-    console.log({output})
+    // console.log({output})
     
     run(output);
 }

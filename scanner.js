@@ -26,7 +26,7 @@ function scan(source) {
     }
     while(current < total) {
         let ch = source[current];
-        // console.log({ch, current})
+    
         if (isDigit(ch)) {
             prev = current;
             let token = getNumber();
@@ -53,11 +53,18 @@ function scan(source) {
             tokens.push("{")
         } else if (ch === '}') {
             tokens.push('}')
+        } else if (ch === '=' && source[current + 1] === '=') {
+            tokens.push('==')
+            current += 1;
         } else if (ch === '=') {
             tokens.push('=')
         } else if (ch === ';') {
             tokens.push(';')
-        } else if (ch >= 'a' && ch <= 'z') {
+        } else if (ch === '<' && source[current + 1] === '=') {
+            tokens.push('<=')
+            current += 1;
+        }
+        else if (ch >= 'a' && ch <= 'z') {
             prev = current;
             let token = getId();
             tokens.push(token);

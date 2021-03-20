@@ -8,10 +8,11 @@
  * ifs -> 'if' '(' exp ')' block
  * block -> '{' statements* '}'
  * vars -> 'var' identifier (= exp)
- * exp -> pexp
+ * exp -> cp
+ * cp -> pexp ('>=' | '<=' | '==' pexp) 
  * pexp -> texp (('+' | '-') texp)*
  * texp -> prefix (('*' | '/') prefix)*
- * prefix -> ('-' | '+') primary
+ * prefix -> ('-' | '+') cp
  * primary -> Number | '('exp')' | IDENTIFER | fun_call;
  * 
  * how can we support infinite prefix ?, if (> 2) 
@@ -25,6 +26,8 @@
  * 
  * 
  */
+
+let globalId = 1;
 
 let tokens = [];
 let current = 0;
@@ -41,7 +44,7 @@ function Expression(op, left, right) {
 }
 
 function getExpression() {
-    return pgetExpression();
+    return cp();
 }
 
 function pgetExpression() {
@@ -53,6 +56,23 @@ function pgetExpression() {
         exp = new Expression(op, exp, right);
     }
     return exp;
+}
+function CP(op, left, right) {
+    this.type = 'cp';
+    this.op = op;
+    this.left = left;
+    this.right =right;
+}
+
+function cp() {
+    let e = pgetExpression();
+    if (tokens[current] === '<=' || tokens[current] === '==' || tokens[current] === '>=') {
+        let op = tokens[current];
+        current += 1;
+        let eright = pgetExpression();
+        return new CP(op, e, eright)
+    }
+    return e;
 }
 
 function prefix() {
@@ -92,6 +112,7 @@ function isDigit(x) {
 }
 
 function FC(id, args) { 
+    this.fid = globalId ++ ;
     this.scope = {};
     this.type = 'fc';
     this.id = id;
@@ -110,7 +131,6 @@ function primary() {
             } else {
                 current += 1;
                 let ep = getExpression();
-                console.log({ep})
                 let eps = [];
                 eps.push(ep);
                 while(tokens[current] === ',') {
@@ -146,7 +166,6 @@ function getVariableDeclartion() {
     current += 1;
     let id = tokens[current];
     current += 1;
-    console.log({current, token: tokens[current]}, 'a')
     if (tokens[current] === '=') {
         current += 1;
         let e = getExpression();
@@ -164,6 +183,7 @@ function consume(t) {
 }
 
 function IF_EXPRESSION(cond, block) {
+    this.type = 'if';
     this.cond = cond;
     this.block = block
 }
@@ -174,7 +194,6 @@ function block() {
     while(tokens[current] && tokens[current] !== '}') {
         st = getStatement();
         sts.push(st);
-        console.log({current, token: tokens[current]})
         // current += 1;
     }
     consume("}")
@@ -191,10 +210,12 @@ function getIfStatement() {
 }
 
 function FUN(id, block, paramters) {
+    this.fid = globalId++;
     this.type = 'fun';
     this.id = id;
     this.block = block;
     this.paramters = paramters;
+    this.scope = {};
 }
 
 function getFunctionDeclartion() {
@@ -252,7 +273,6 @@ function getStatement() {
             return getIfStatement();
         }
         case 'fun': {
-            console.log('hit')
             return getFunctionDeclartion();
         }
         default: {
