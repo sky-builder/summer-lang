@@ -83,6 +83,7 @@ function tgetExpression() {
 }
 
 function Identifier(name) {
+    this.type = 'id';
     this.name = name;
 }
 
@@ -91,6 +92,7 @@ function isDigit(x) {
 }
 
 function FC(id, args) { 
+    this.scope = {};
     this.type = 'fc';
     this.id = id;
     this.args = args;

@@ -1,4 +1,5 @@
 let scope = {};
+let currentFrame = null;
 
 function doOp(op, left, right) {
     if (op === '+') {
@@ -7,6 +8,11 @@ function doOp(op, left, right) {
         return +left - +right;
     }
 }
+function getScope() {
+    if (!this.currentFrame) return scope;
+    return currentFrame.scope;
+}
+
 function runFc(s) {
     let id = s.id;
     let f = funs.find(item => item.id === id);
@@ -34,6 +40,9 @@ function evaluate(exp) {
         return doOp(op, evaluate(left), evaluate(right));
     } else if (type === 'fc') {
         return runFc(exp);
+    } else if (type ===  'id') {
+        let scope = getScope();
+        return scope[exp.name];
     } else {
         return +exp;
     }
@@ -50,7 +59,12 @@ function runStat(s) {
         }
         return null;
     } else if (s.type === 'fc') {
+        if (currentFrame) {
+            currentFrame.prev = currentFrame;
+        }
+        currentFrame = s;
         let result = runFc(s);
+        currentFrame = currentFrame.prev ? currentFrame.prev : null;
         console.log({result})
     } else if (s.type === 'fun') {
         funs.push(s); 
@@ -60,6 +74,7 @@ function runStat(s) {
         let op = s.op;
         let right = s.right
         console.log({left, right, op});
+        let scope = getScope();
         if (typeof left === 'object') left = scope[left.name];
         if (typeof right === 'object') right = scope[right.name];
         let result = doOp(op, Number(left), Number(right))
@@ -68,6 +83,7 @@ function runStat(s) {
     } else if (s.type === 'variable_declartion') {
         console.log(2)
         let {id, exp} = s;
+        let scope = getScope();
         scope[id] = evaluate(exp);
     }
 }
