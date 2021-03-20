@@ -1,4 +1,9 @@
-fun f(a) {
-    return 1 + a;
+fun a() {
+    return 41;
 }
-f(41);
+
+fun b() {
+    return a() + 1;
+}
+
+b();

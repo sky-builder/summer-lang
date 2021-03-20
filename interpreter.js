@@ -7,16 +7,35 @@ function doOp(op, left, right) {
         return +left - +right;
     }
 }
+function runFc(s) {
+    let id = s.id;
+    let f = funs.find(item => item.id === id);
+    let stats = f.block;
+    let args = s.args;
+    if (args) {
+        let paramters = f.paramters;
+        paramters.forEach((item, index)=> {
+            scope[item] = args[index]
+        })
+    }
+    let result;
+    for(let i = 0; i < stats.length; i += 1) {
+        result = runStat(stats[i]);
+        if (stats[i] && stats[i].type === 'return') {
+            break;
+        }
+    }
+    return result;
+}
 
 function evaluate(exp) {
-    if (exp === 'a') return scope[a];
     let {left, op, right, type} = exp;
     if (type === 'binary-expression') {
-        if (typeof left === 'object') left = scope[left.name];
-        if (typeof right === 'object') right = scope[right.name];
-        return doOp(op, left, right);
-    } else if (+exp) {
-        return +exp
+        return doOp(op, evaluate(left), evaluate(right));
+    } else if (type === 'fc') {
+        return runFc(exp);
+    } else {
+        return +exp;
     }
 }
 
@@ -31,23 +50,7 @@ function runStat(s) {
         }
         return null;
     } else if (s.type === 'fc') {
-        let id = s.id;
-        let f = funs.find(item => item.id === id);
-        let stats = f.block;
-        let args = s.args;
-        if (args) {
-            let paramters = f.paramters;
-            paramters.forEach((item, index)=> {
-                scope[item] = args[index]
-            })
-        }
-        let result;
-        for(let i = 0; i < stats.length; i += 1) {
-            result = runStat(stats[i]);
-            if (stats[i] && stats[i].type === 'return') {
-                break;
-            }
-        }
+        let result = runFc(s);
         console.log({result})
     } else if (s.type === 'fun') {
         funs.push(s); 

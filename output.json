@@ -1,1 +1,1 @@
-[{"type":"fun","id":"f","block":[{"type":"return","exp":{"type":"binary-expression","op":"+","left":"1","right":{"name":"a"}}}],"paramters":["a"]},{"type":"fc","id":"f","args":["41"]}]
+[{"type":"fun","id":"a","block":[{"type":"return","exp":"41"}]},{"type":"fun","id":"b","block":[{"type":"return","exp":{"type":"binary-expression","op":"+","left":{"type":"fc","id":"a"},"right":"1"}}]},{"type":"fc","id":"b"}]
